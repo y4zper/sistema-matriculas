@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout::head}">
+    <meta charset="UTF-8">
+    <title>SISTEMA DE MATRICULAS</title>
+</head>
+<body>
+<script src="https://momentjs.com/downloads/moment.min.js"></script>
+<script th:src="@{/scripts/web/matricula/frmMatricula.js}" type="text/javascript"></script>
+
+<nav th:replace="~{layout::menu}"></nav>
+<div class="card ">
+    <div class="card-header text-bg-dark mb-3">GESTIÓN DE MATRÍCULAS</div>
+    <div class="card-body">
+        <button id="btnagregar" type="button" class="btn btn-primary"><i class="fas fa-plus"></i> Agregar Matrícula</button>
+
+        <div class="d-flex justify-content-end mb-3">
+            <button id="btnbuscarGrado" type="button" class="btn btn-primary me-2"><i class="fas fa-search"></i> Buscar matrícula por Grado</button>
+            <button id="btnbuscarEstado" type="button" class="btn btn-primary"><i class="fas fa-search"></i> Buscar matrícula por Estado</button>
+        </div>
+        <hr />
+        <div id="mensaje"></div>
+        <table id="tblmatricula" class="table">
+            <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">ESTUDIANTE</th>
+                <th scope="col">GRADO</th>
+                <th scope="col">FECHA DE MATRÍCULA</th>
+                <th scope="col">ESTADO</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="matricula :${listamatriculas}">
+                <td th:text="${matricula.idmatricula}"></td>
+                <td th:text="${matricula.estudiante.nomestudiante + ' ' + matricula.estudiante.apeestudiante}"></td>
+                <td th:text="${matricula.grado.nomgrado}"></td>
+                <td th:text="${#dates.format(matricula.fechamat, 'dd-MM-yyyy')}"></td>
+                <td>
+                    <span th:switch="${matricula.estado}">
+                        <span th:case="0">Pendiente</span>
+                        <span th:case="1">Confirmado</span>
+                        <span th:case="2">Cancelado</span>
+                    </span></td>
+                <td>
+                    <button type="button" class="btn btn-success btnVerDetalles"
+                            th:data-idmatricula="${matricula.idmatricula}"
+                            th:data-idestudiante="${matricula.estudiante.idestudiante}"
+                            th:data-idgrado="${matricula.grado.idgrado}">
+                        <i class="fas fa-eye"></i></button>
+                    <button type="button" class="btn btn-info btnactualizar"
+                            th:data-idmatricula="${matricula.idmatricula}"
+                            th:data-idestudiante="${matricula.estudiante.idestudiante}"
+                            th:data-idgrado="${matricula.grado.idgrado}">
+                        <i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-danger btnCambiarEstado"
+                            th:data-idmatricula="${matricula.idmatricula}"
+                            th:data-nomestudiante="${matricula.estudiante.nomestudiante}"
+                            th:data-apeestudiante="${matricula.estudiante.apeestudiante}"
+                            th:data-nomgrado="${matricula.grado.nomgrado}">
+                        <i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Registrar / Actualizar Matricula -->
+<div class="modal fade" id="modalNuevo" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">MATRÍCULA</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="cboestudiantes" class="form-label">ESTUDIANTE</label>
+                    <select id="cboestudiantes" class="form-control"></select>
+                </div>
+                <div class="mb-3">
+                    <label for="cbogrados" class="form-label">GRADO</label>
+                    <select id="cbogrados" class="form-control"></select>
+                </div>
+                <input type="hidden" id="hddcodmatricula" value="0">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
+                <button type="button" id="btnguardar" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals filtrar Estudiante GRADO-->
+<div class="modal fade" id="modalFiltrado" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel3">MATRICULA</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="cbofiltradogrados" class="form-label">GRADO</label>
+                    <select id="cbofiltradogrados" class="form-control"></select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
+                <button type="button" id="btnfiltrargrado" class="btn btn-primary"><i class="fas fa-save"></i> Filtrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modals filtrar Estudiante ESTADO -->
+<div class="modal fade" id="modalFiltrado2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel4">MATRICULA</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="cboestado" class="form-label">ESTADO</label>
+                    <select id="cboestado" class="form-control"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
+                <button type="button" id="btnfiltrarestado" class="btn btn-primary"><i class="fas fa-save"></i> Filtrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambiar Estado -->
+<div class="modal fade" id="modalCambiarEstado" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel2">CAMBIAR ESTADO MATRÍCULA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="mensajeModal">¿A qué estado desea cambiar la matrícula?</p>
+                <div class="mb-3">
+                    <label for="estadoSelect" class="form-label">Nuevo Estado:</label>
+                    <select id="estadoSelect" class="form-control">
+                        <option value="1">Confirmar</option>
+                        <option value="2">Cancelar</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="observacionesDiv" style="display: none;">
+                    <label for="observaciones" class="form-label">Observaciones:</label>
+                    <textarea class="form-control" id="observaciones" rows="3" disabled></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarCambiarEstado">Sí</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal DETALLES  -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel5">DETALLES DE MATRÍCULA</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detallesMatricula"></div>
+                <div id="detallesEstudiante"></div>
+                <div id="cursosGrado"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
